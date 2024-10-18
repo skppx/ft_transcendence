@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  img             String    @default("./img/default.jpg")
+  email           String    @unique
+  username        String    @unique
+  password        String
+  twoAuthOn       Boolean   @default(false)
+  twoAuthSecret   String?
+  apiToken        String?
+  maxAge          Int       @default(0)
+  connectedChat   Boolean   @default(false)
+  matchWinned     Match[]   @relation(name: "win")
+  matchLost       Match[]   @relation(name: "lost")
+  channels        Channel[]
+  messageSent     Message[] @relation(name: "sender")
+  messageReceived Message[] @relation(name: "receiver")
+  friendList      String[]  @db.Uuid
+  blockList       String[]  @db.Uuid
+}
+
+model Message {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content    String
+  sender     Users    @relation(name: "sender", fields: [senderID], references: [id])
+  senderID   String   @db.Uuid
+  receiver   Users?   @relation(name: "receiver", fields: [receiverID], references: [id])
+  receiverID String?  @db.Uuid
+  channel    Channel? @relation(fields: [channelID], references: [id])
+  channelID  String?  @db.Uuid
+  createdAt  DateTime @default(now())
+}
+
+model Channel {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  img       String      @default("/home/qbornet/42/ft_transcendence/backend/img/default.jpg")
+  chanName  String      @unique
+  type      ChannelType @default(PRIVATE)
+  createdAt DateTime    @default(now())
+  password  String?
+  creatorID String      @db.Uuid
+  admins    String[]    @db.Uuid
+  bans      String[]    @db.Uuid
+  mute      String[]    @db.Uuid
+  members   Users[]
+  messages  Message[]
+}
+
+model Match {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  timestamp     DateTime  @default(now())
+  mode          MatchType @default(CLASSIC)
+  playerWin     Users     @relation(name: "win", fields: [idPlayerWin], references: [id])
+  idPlayerWin   String    @db.Uuid
+  winnerScore   Int       @default(0)
+  playerLoose   Users     @relation(name: "lost", fields: [idPlayerLoose], references: [id])
+  idPlayerLoose String    @db.Uuid
+  looserScore   Int       @default(0)
+}
+
+enum ChannelType {
+  PUBLIC
+  PRIVATE
+  PASSWORD
+}
+
+enum MatchType {
+  CLASSIC
+  SPEED
+}

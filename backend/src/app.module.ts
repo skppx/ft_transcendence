@@ -23,7 +23,7 @@ import { PongModule } from './pong/pong.module';
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client'),
-      exclude: ['/api(.*)']
+      exclude: ['/api', '/api/*splat']
     }),
     ChatModule,
     AuthModule,
